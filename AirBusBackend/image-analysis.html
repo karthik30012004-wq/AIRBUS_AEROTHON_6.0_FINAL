@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO Object Detection API Test</title>
+</head>
+<body>
+    <h1>YOLO Object Detection API Test</h1>
+    <form id="uploadForm">
+        <label for="fileInput">Choose an image:</label>
+        <input type="file" id="fileInput" accept="image/*" required>
+        <button type="submit">Upload and Detect</button>
+    </form>
+    <div id="result">
+        <h2>Detections:</h2>
+        <pre id="detections"></pre>
+        <h2>Result Image:</h2>
+        <img id="resultImage" src="" alt="Result Image" style="max-width: 100%;">
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const fileInput = document.getElementById('fileInput');
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/image-analysis', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorResponse = await response.json();
+                    throw new Error(`Error: ${errorResponse.error}`);
+                }
+
+                const result = await response.json();
+                document.getElementById('detections').innerText = JSON.stringify(result.detections, null, 2);
+                document.getElementById('resultImage').src = `data:image/jpeg;base64,${result.result_image}`;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('detections').innerText = `An error occurred: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>

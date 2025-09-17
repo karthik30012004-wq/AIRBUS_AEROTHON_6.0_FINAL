@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cracks and Dents Detection and Recommendation</title>
+</head>
+<body>
+    <h1>Cracks and Dents Detection and Repair Recommendations</h1>
+    <form id="uploadForm">
+        <label for="fileInput">Choose an image:</label>
+        <input type="file" id="fileInput" accept="image/*" required>
+        <button type="submit">Upload and Detect</button>
+    </form>
+    <div id="result">
+        <h2>Detections:</h2>
+        <ul id="detections"></ul>
+        <h2>Repair Recommendations:</h2>
+        <ul id="recommendations"></ul>
+        <h2>Result Image:</h2>
+        <img id="resultImage" src="" alt="Result Image" style="max-width: 100%;">
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const fileInput = document.getElementById('fileInput');
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/detect_and_recommend', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error processing image');
+                }
+
+                const result = await response.json();
+                displayDetections(result.damage_details);
+                displayRecommendations(result.repair_recommendations);
+                document.getElementById('resultImage').src = `data:image/jpeg;base64,${result.image}`;
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while processing the image.');
+            }
+        });
+
+        function displayDetections(damageDetails) {
+            const detectionsList = document.getElementById('detections');
+            detectionsList.innerHTML = '';
+
+            damageDetails.forEach((damage, index) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `Damage ${index + 1}: Location = (${damage.location[0]}, ${damage.location[1]}), Severity = ${damage.severity.toFixed(2)}, Type = ${damage.type}`;
+                detectionsList.appendChild(listItem);
+            });
+        }
+
+        function displayRecommendations(recommendations) {
+            const recommendationsList = document.getElementById('recommendations');
+            recommendationsList.innerHTML = '';
+
+            recommendations.forEach((rec, index) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `Damage ${index + 1}: ${rec.action} - ${rec.details}`;
+                recommendationsList.appendChild(listItem);
+            });
+        }
+    </script>
+</body>
+</html>
